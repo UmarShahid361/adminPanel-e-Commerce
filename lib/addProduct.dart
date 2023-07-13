@@ -27,42 +27,33 @@ class _AddProductState extends State<AddProduct> {
     openFiles(pickedFile.files);
   }
 
-  final options = [
-    "Saree",
-    "Gowns",
-    "Westerns",
-    "Dress Material",
-    "Lehengas",
-    "Kurti",
-    "Top with Bottom"
-  ];
-  final saree = [
-    "Daily Wear Saree",
-    "Printed Saree",
-    "Cotton Saree",
-    "Silk Saree",
-    "All Saree"
-  ];
-  final gowns = ["Gown 1", "Gown 2", "Gown 3"];
-  final westerns = ["Western 1", "Western 2", "Western 3"];
-  final dressMaterial = [
-    "Dress Material 1",
-    "Dress Material 2",
-    "Dress Material 3"
-  ];
-  final lehengas = ["All Lehengas"];
-  final kurti = ["Designer Kurti", "Printed Kurti", "All Kurti"];
-  final topWithBottom = ["Kurti Plazo", "All Top with Bottom"];
   final titleController = TextEditingController();
   final discountedController = TextEditingController();
   final priceController = TextEditingController();
   final offController = TextEditingController();
   final descriptionController = TextEditingController();
   bool loading = false;
-  String? value;
-  String? category;
-  String? value2;
 
+  String? mainCategory;
+  String? mainCategoryId;
+
+
+  String? subCategory;
+  late Future<QuerySnapshot<Map<String, dynamic>>> mainCategoryFuture;
+  late Future<QuerySnapshot<Map<String, dynamic>>> subCategoryFuture;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    mainCategoryFuture = FirebaseFirestore.instance.collection("Single Piece").get();
+
+  }
+
+  getSubCategories(){
+    subCategoryFuture = FirebaseFirestore.instance.collection("Single Piece").doc(mainCategoryId).collection("subCategory").get();
+  }
   @override
   Widget build(BuildContext context) {
     // print(files.isEmpty);
@@ -219,201 +210,95 @@ class _AddProductState extends State<AddProduct> {
               const SizedBox(
                 height: 20,
               ),
-              Container(
-                padding:
+              FutureBuilder(
+                future: mainCategoryFuture,
+                builder: (context, snapshot) {
+                  if(snapshot.connectionState == ConnectionState.waiting){
+                    return const Center(child: CircularProgressIndicator(color: Colors.purple,));
+                  }
+                  if(snapshot.hasError){
+                    return Center(child: Text(snapshot.error.toString()),);
+                  }
+                  if(snapshot.connectionState == ConnectionState.done && snapshot.data!.docs.isEmpty){
+                    return Center(child: Text("No Sub Categories found"),);
+                  }
+
+                  return Container(
+                    padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.black, width: 1),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton(
-                    icon: const Icon(Icons.arrow_drop_down,
-                        color: Colors.deepPurple),
-                    iconSize: 36,
-                    isExpanded: true,
-                    value: value,
-                    items: options.map(buildMenuItem).toList(),
-                    onChanged: (value) => setState(
-                      () {
-                        this.value = value;
-                        category = value;
-                      },
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.black, width: 1),
                     ),
-                  ),
-                ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton(
+                        icon: const Icon(Icons.arrow_drop_down,
+                            color: Colors.deepPurple),
+                        iconSize: 36,
+                        isExpanded: true,
+                        value: mainCategory,
+                        items: snapshot.data!.docs.map((e) => buildMenuItem(e.data()['category'], e.id),).toList(),
+                        onChanged: (value) => setState(
+                              () {
+                                getSubCategories();
+                                print(mainCategoryId);
+                                subCategory = null;
+                                mainCategory = value;
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+
+                },
               ),
+
+              const SizedBox(height: 20,),
+              if(mainCategory != null)
+
+                FutureBuilder(
+                  future: subCategoryFuture,
+                  builder: (context, snapshot) {
+                    if(snapshot.connectionState == ConnectionState.waiting){
+                      return const Center(child: CircularProgressIndicator(color: Colors.purple,));
+                    }
+                    if(snapshot.hasError){
+                      return Center(child: Text(snapshot.error.toString()),);
+                    }
+                    if(snapshot.connectionState == ConnectionState.done && snapshot.data!.docs.isEmpty){
+                      return Center(child: Text("No Main Categories found"),);
+                    }
+
+                    return Container(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.black, width: 1),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton(
+                          icon: const Icon(Icons.arrow_drop_down,
+                              color: Colors.deepPurple),
+                          iconSize: 36,
+                          isExpanded: true,
+                          value: subCategory,
+                          items: snapshot.data!.docs.map((e) => buildMenuItem(e.data()['subCategoryName'], e.id),).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              subCategory = value;
+                            });
+                          }
+                        ),
+                      ),
+                    );
+
+                  },
+                ),
               const SizedBox(
                 height: 20,
               ),
-              if (value == "Saree")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: saree.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              if (value == "Gowns")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: gowns.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              if (value == "Westerns")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: westerns.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              if (value == "Dress Material")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: dressMaterial.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              if (value == "Lehengas")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: lehengas.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              if (value == "Kurti")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: kurti.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              if (value == "Top with Bottom")
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton(
-                      icon: const Icon(Icons.arrow_drop_down,
-                          color: Colors.deepPurple),
-                      iconSize: 36,
-                      isExpanded: true,
-                      value: value2,
-                      items: topWithBottom.map(buildMenuItem).toList(),
-                      onChanged: (value) => setState(
-                        () {
-                          value2 = value;
-                        },
-                      ),
-                    ),
-                  ),
-                ),
+
               const SizedBox(
                 height: 20,
               ),
@@ -448,31 +333,36 @@ class _AddProductState extends State<AddProduct> {
                         'discountedPrice': discountedController.text.toString(),
                         'off': offController.text.toString(),
                         'description': descriptionController.text.toString(),
-                        'category': value2,
+                        'category': mainCategory,
+                        'subCategory' : subCategory,
                         'imageURL': url1,
                       },
                     ).then((value) async {
                       id = value.id;
                       Utils().toastMessage('Product Added Successfully');
                       Utils().toastMessage("Image Uploaded Successfully!");
-                      FirebaseFirestore.instance
-                          .collection('Products')
-                          .doc(id)
-                          .collection("variants")
-                          .doc()
-                          .set({
-                        'imageURLs': allImagesURLs,
-                        'timestamp': DateTime.now().millisecondsSinceEpoch,
+                      await Future.wait(uploadedImages.map((e) {
+                       return FirebaseFirestore.instance
+                            .collection('Products')
+                            .doc(id)
+                            .collection("variants")
+                            .doc()
+                            .set({
+                          'imageURLs': e,
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+                      })).then((value) {
+                        titleController.clear();
+                        priceController.clear();
+                        discountedController.clear();
+                        offController.clear();
+                        descriptionController.clear();
                       });
+
                     });
                   });
-                  titleController.clear();
-                  priceController.clear();
-                  discountedController.clear();
-                  offController.clear();
-                  descriptionController.clear();
-                  value == null;
-                  value2 == null;
+
+
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -526,11 +416,15 @@ class _AddProductState extends State<AddProduct> {
       return '========== Image in null ==========';
     }
   }
+  DropdownMenuItem<String> buildMenuItem(String item, String docId) => DropdownMenuItem(
+      value: item,
+      onTap: () {
+        mainCategoryId = docId;
+      },
+      child: Text(
+        item,
+        style: const TextStyle(fontSize: 20),
+      ));
+
 }
 
-DropdownMenuItem<String> buildMenuItem(String item) => DropdownMenuItem(
-    value: item,
-    child: Text(
-      item,
-      style: const TextStyle(fontSize: 20),
-    ));

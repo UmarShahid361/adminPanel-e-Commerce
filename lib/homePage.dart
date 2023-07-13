@@ -1,5 +1,9 @@
+
+
 import 'package:adde_commerce/addProduct.dart';
+import 'package:adde_commerce/addSubCategory.dart';
 import 'package:adde_commerce/deleteProduct.dart';
+import 'package:adde_commerce/main.dart';
 import 'package:adde_commerce/updateProduct.dart';
 import 'package:adde_commerce/utils.dart';
 import 'package:adde_commerce/viewProdoct.dart';
@@ -16,37 +20,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? value;
-  String? category;
-  String? value2;
-  final options = [
-    "Saree",
-    "Gowns",
-    "Westerns",
-    "Dress Material",
-    "Lehengas",
-    "Kurti",
-    "Top with Bottom"
-  ];
-  final saree = [
-    "Daily Wear Saree",
-    "Printed Saree",
-    "Cotton Saree",
-    "Silk Saree",
-    "All Saree"
-  ];
-  final gowns = ["Gown 1", "Gown 2", "Gown 3"];
-  final westerns = ["Western 1", "Western 2", "Western 3"];
-  final dressMaterial = [
-    "Dress Material 1",
-    "Dress Material 2",
-    "Dress Material 3"
-  ];
-  final lehengas = ["All Lehengas"];
-  final kurti = ["Designer Kurti", "Printed Kurti", "All Kurti"];
-  final topWithBottom = ["Kurti Plazo", "All Top with Bottom"];
+
   bool loading = false;
 
+  var mainCategoryController = TextEditingController();
+  late Stream<QuerySnapshot<Map<String, dynamic>>> stream;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    stream = FirebaseFirestore.instance.collection("Single Piece").snapshots();
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    mainCategoryController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,269 +120,140 @@ class _HomePageState extends State<HomePage> {
           title: const Text('Add Single Piece'),
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.black, width: 1),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton(
-                        icon: const Icon(Icons.arrow_drop_down,
-                            color: Colors.deepPurple),
-                        iconSize: 36,
-                        isExpanded: true,
-                        value: value,
-                        items: options.map(buildMenuItem).toList(),
-                        onChanged: (value) => setState(
-                          () {
-                            this.value = value;
-                            category = value;
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  if (value == "Saree")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: saree.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                const SizedBox(
+                  height: 20,
+                ),
+
+                Expanded(
+                  child: StreamBuilder(
+                    stream: stream,
+                    builder: (context, snapshot) {
+                      if(snapshot.connectionState == ConnectionState.waiting){
+                        return const Center(child: CircularProgressIndicator(color: Colors.purple,));
+                      }
+                      if(snapshot.hasError){
+                        return Center(child: Text(snapshot.error.toString()),);
+                      }
+                      if(snapshot.connectionState == ConnectionState.done && snapshot.data!.docs.isEmpty){
+                        return Center(child: Text("No Main Categories found"),);
+                      }
+
+                      return ListView.builder(
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          var mainCategory = snapshot.data!.docs[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => AddSubCategory(mainCategoryId: mainCategory.id),));
                             },
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (value == "Gowns")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: gowns.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (value == "Westerns")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: westerns.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (value == "Dress Material")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: dressMaterial.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (value == "Lehengas")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: lehengas.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (value == "Kurti")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: kurti.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (value == "Top with Bottom")
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton(
-                          icon: const Icon(Icons.arrow_drop_down,
-                              color: Colors.deepPurple),
-                          iconSize: 36,
-                          isExpanded: true,
-                          value: value2,
-                          items: topWithBottom.map(buildMenuItem).toList(),
-                          onChanged: (value) => setState(
-                            () {
-                              value2 = value;
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      addCollection()
-                     .then((value) {
-                        setState(() {
-                          category = null;
-                          value2 = null;
-                          value = null;
-                          loading = false;
-                        });
-                        Utils().toastMessage('Product Added Successfully');
-                      }).onError((error, stackTrace) {
-                        setState(() {
-                          loading = false;
-                        });
-                        Utils().toastMessage(error.toString());
-                      });
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                                child: Text(mainCategory["category"], style: TextStyle(fontWeight: FontWeight.w400, fontSize: 17),),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      width: MediaQuery.of(context).size.width * 0.80,
-                      height: 50,
-                      child: Center(
-                        child: loading ? const CircularProgressIndicator(
-                          strokeWidth: 3,
-                          color: Colors.white,
-                        ) : const Text('Add Product'),
-                      ),
+                  ),
+                ),
+
+                ElevatedButton(
+                  onPressed: () {
+                    showAddMainCategoryDialog(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    width: MediaQuery.of(context).size.width * 0.80,
+                    height: 50,
+                    child: Center(
+                      child: loading ? const CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: Colors.purple,
+                      ) : const Text('Add Main Category'),
                     ),
                   ),
-                  const SizedBox(height: 20,),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20,),
+              ],
             ),
           ),
         ));
   }
-  Future<String?> addCollection() async {
-    final users = FirebaseFirestore.instance.collection('Single Piece');
-    var result = await users.add({
-    'category': category.toString(),
+
+  Future showAddMainCategoryDialog(BuildContext context){
+    return showDialog(context: context, builder: (context) {
+      return Center(
+        child: Material(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            height: 240,
+            width: MediaQuery.of(context).size.width*0.85,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Main Category", style: TextStyle(fontSize: 18),),
+                  const SizedBox(height: 20,),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                      labelText: 'Main Category Name',
+                    ),
+                    controller: mainCategoryController,
+                  ),
+                  const SizedBox(height: 20,),
+                  SizedBox(
+                    width: 200,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if(mainCategoryController.text.trim().isEmpty){
+                          Utils().toastMessage("Please enter some main Category");
+                          return;
+                        }
+                        addCollection(mainCategoryController.text.toString()).then((value) {
+                          mainCategoryController.clear();
+                          Navigator.pop(context);
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        width: MediaQuery.of(context).size.width * 0.80,
+                        height: 50,
+                        child: Center(
+                          child: const Text('Add'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
     },);
-    await addSubCollection(
-      id: result.id,
-    );
+  }
+  Future<String?> addCollection(String mainCategory) async {
+    final users = FirebaseFirestore.instance.collection('Single Piece');
+    await users.add({
+    'category': mainCategory,
+    },);
     return "Created";
   }
-  Future<String?> addSubCollection({String? id}) async {
-    final users = FirebaseFirestore.instance.collection('Single Piece');
-    users.doc(id).collection("subCategory").add({
-      'subCategoryName': value2.toString(),
-    },);
-    return "Created";
-  }
+
 }
 
-DropdownMenuItem<String> buildMenuItem(String item) => DropdownMenuItem(
-    value: item,
-    child: Text(
-      item,
-      style: const TextStyle(fontSize: 20),
-    ));
